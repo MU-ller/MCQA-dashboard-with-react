@@ -1,0 +1,116 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.filelabel {
+    display: block;
+    background-color: #e0f0ff;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.filelabel input {
+    display: none;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.controls select, .controls button {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.controls button {
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+
+.controls button:disabled {
+    background-color: #a5d6a7;
+    cursor: not-allowed;
+}
+
+.card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    background-color: #fafafa;
+}
+
+.q-head {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.options button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.options button:hover {
+    background-color: #f0f0f0;
+}
+
+.options button.chosen {
+    background-color: #d0e0ff;
+    border-color: #3399ff;
+}
+
+.options button.correct {
+    background-color: #c8e6c9;
+    border-color: #4caf50;
+}
+
+.options button.incorrect {
+    background-color: #ffcdd2;
+    border-color: #f44336;
+}
+
+.meta {
+    font-size: 0.9em;
+    margin-top: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+footer {
+    text-align: center;
+    font-size: 0.85em;
+    margin-top: 20px;
+    color: #555;
+}
