@@ -88,32 +88,58 @@ export default function App() {
     }
 
     function exportPDF() {
-        const doc = new jsPDF()
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+        const pageHeight = doc.internal.pageSize.height
+        const margin = 14
+        let y = 20
+
         doc.setFontSize(16)
-        doc.text('Quiz Results', 14, 20)
-        let y = 30
+        doc.text('Quiz Results', margin, y)
+        y += 10
+
         filtered.forEach((q, i) => {
-            const chosen = results[`${selectedSheet}-${i}`]
-            const correct = q.correct
-            doc.setFontSize(12)
-            doc.text(`${i + 1}. ${q.question}`, 14, y)
-            y += 6
-            doc.setFontSize(10)
-            doc.text(`Your Answer: ${chosen ?? '—'}`, 14, y)
-            y += 5
-            doc.text(`Correct Answer: ${correct}`, 14, y)
-            y += 7
-            if (q.explanation) {
-                doc.text(`Explanation: ${q.explanation}`, 14, y)
-                y += 7
-            }
-            if (y > 270) {
+            if (y > pageHeight - 40) { // handle page overflow
                 doc.addPage()
                 y = 20
             }
+
+            doc.setFontSize(12)
+            const questionLines = doc.splitTextToSize(`${i + 1}. ${q.question}`, 180)
+            doc.text(questionLines, margin, y)
+            y += questionLines.length * 6
+
+            // List options
+            doc.setFontSize(10)
+            q.options.forEach(opt => {
+                const optionText = `${opt.key}. ${opt.text}`
+                const optionLines = doc.splitTextToSize(optionText, 170)
+                doc.text(optionLines, margin + 5, y)
+                y += optionLines.length * 5
+            })
+
+            // Answers
+            y += 3
+            const chosen = results[`${selectedSheet}-${i}`] || '—'
+            const correct = q.correct || '—'
+            doc.text(`Your Answer: ${chosen}`, margin, y)
+            y += 5
+            doc.text(`Correct Answer: ${correct}`, margin, y)
+            y += 5
+
+            // Explanation
+            if (q.explanation) {
+                const expLines = doc.splitTextToSize(`Explanation: ${q.explanation}`, 170)
+                y += 3
+                doc.text(expLines, margin, y)
+                y += expLines.length * 5
+            }
+
+            y += 8
         })
+
         doc.save('quiz-results.pdf')
     }
+
 
     const score = useMemo(() => {
         const total = filtered.length
