@@ -6,13 +6,13 @@ import './App.css' // We'll use this for styles
 function normalizeRow(row) {
     const q = (row['Question'] || row['question'] || row['Questions'] || '').toString()
     const options = []
-    ;['A', 'B', 'C', 'D', 'E'].forEach((letter) => {
-        const key1 = `Option ${letter}`
-        const key2 = `Option${letter}`
-        const key3 = letter
-        const value = row[key1] ?? row[key2] ?? row[key3] ?? ''
-        if (value !== '') options.push({ key: letter, text: value.toString() })
-    })
+        ;['A', 'B', 'C', 'D', 'E'].forEach((letter) => {
+            const key1 = `Option ${letter}`
+            const key2 = `Option${letter}`
+            const key3 = letter
+            const value = row[key1] ?? row[key2] ?? row[key3] ?? ''
+            if (value !== '') options.push({ key: letter, text: value.toString() })
+        })
     const correct = (row['Correct Answer'] || row['Correct'] || row['Answer'] || '').toString().trim()
     const explanation = (row['Explanation'] || row['Notes'] || '').toString()
     const domain = (row['Domain'] || '').toString()
@@ -27,12 +27,14 @@ export default function App() {
     const [filterDomain, setFilterDomain] = useState('')
     const [filterCompetency, setFilterCompetency] = useState('')
     const [results, setResults] = useState({})
+    const [loading, setLoading] = useState(true)
 
     const GOOGLE_SHEET_XLSX_URL = 'https://docs.google.com/spreadsheets/d/1DGd-bMqH5lIHvPF3dkI9KqKgFGtjRLXoxiE5no2M46Y/export?format=xlsx&id=1DGd-bMqH5lIHvPF3dkI9KqKgFGtjRLXoxiE5no2M46Y'
 
     // Load Google Sheets file on startup
     useEffect(() => {
         async function loadFromGoogleSheets(url) {
+            setLoading(true)
             try {
                 const res = await fetch(url)
                 const buffer = await res.arrayBuffer()
@@ -53,6 +55,8 @@ export default function App() {
                 setQuestionsBySheet(newQuestionsBySheet)
             } catch (err) {
                 console.error('Failed to load Google Sheet:', err)
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -125,6 +129,13 @@ export default function App() {
         <div className="container">
             <h1>Excel Quiz Dashboard</h1>
 
+            {loading && (
+                <div className="loading">
+                    <div className="spinner"></div>
+                    <p>Loading quiz from Google Drive... ⏳</p>
+                </div>
+            )}
+
             {availableSheets.length > 1 && (
                 <div className="sheet-selector">
                     <label>Sheet: </label>
@@ -161,7 +172,7 @@ export default function App() {
             </div>
 
             <div className="questions">
-                {filtered.length === 0 && <p>No questions loaded.</p>}
+                {filtered.length === 0 && !loading && <p>No questions loaded.</p>}
                 {filtered.map((q, idx) => {
                     const chosen = results[`${selectedSheet}-${idx}`]
                     const correctness = checkIsCorrect(q, chosen)
