@@ -132,7 +132,7 @@ export default function App() {
             {loading && (
                 <div className="loading">
                     <div className="spinner"></div>
-                    <p>Loading quiz Avaliable ... ⏳</p>
+                    <p>Loading  Avaliable Quiz... ⏳</p>
                 </div>
             )}
 
