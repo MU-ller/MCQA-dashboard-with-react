@@ -1,28 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import './App.css' // We'll use this for styles
-
-function parseExcelFile(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-            try {
-                const data = new Uint8Array(e.target.result)
-                const workbook = XLSX.read(data, { type: 'array' })
-                const allSheets = workbook.SheetNames.map(name => ({
-                    name,
-                    data: XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' })
-                }))
-                resolve(allSheets)
-            } catch (err) {
-                reject(err)
-            }
-        }
-        reader.onerror = reject
-        reader.readAsArrayBuffer(file)
-    })
-}
 
 function normalizeRow(row) {
     const q = (row['Question'] || row['question'] || row['Questions'] || '').toString()
@@ -49,26 +28,36 @@ export default function App() {
     const [filterCompetency, setFilterCompetency] = useState('')
     const [results, setResults] = useState({})
 
-    async function handleFile(e) {
-        const file = e.target.files[0]
-        if (!file) return
-        try {
-            const allSheets = await parseExcelFile(file)
-            setAvailableSheets(allSheets)
-            const firstSheet = allSheets[0]?.name || ''
-            setSelectedSheet(firstSheet)
+    const GOOGLE_SHEET_XLSX_URL = 'https://docs.google.com/spreadsheets/d/1DGd-bMqH5lIHvPF3dkI9KqKgFGtjRLXoxiE5no2M46Y/export?format=xlsx&id=1DGd-bMqH5lIHvPF3dkI9KqKgFGtjRLXoxiE5no2M46Y'
 
-            const newQuestionsBySheet = {}
-            allSheets.forEach(s => {
-                const parsed = s.data.map(normalizeRow).filter(r => r.question && r.options.length)
-                newQuestionsBySheet[s.name] = parsed
-            })
-            setQuestionsBySheet(newQuestionsBySheet)
-        } catch (err) {
-            console.error(err)
-            alert('Failed to parse Excel file: ' + err.message)
+    // Load Google Sheets file on startup
+    useEffect(() => {
+        async function loadFromGoogleSheets(url) {
+            try {
+                const res = await fetch(url)
+                const buffer = await res.arrayBuffer()
+                const workbook = XLSX.read(buffer, { type: 'array' })
+                const allSheets = workbook.SheetNames.map(name => ({
+                    name,
+                    data: XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' })
+                }))
+                setAvailableSheets(allSheets)
+                const firstSheet = allSheets[0]?.name || ''
+                setSelectedSheet(firstSheet)
+
+                const newQuestionsBySheet = {}
+                allSheets.forEach(s => {
+                    const parsed = s.data.map(normalizeRow).filter(r => r.question && r.options.length)
+                    newQuestionsBySheet[s.name] = parsed
+                })
+                setQuestionsBySheet(newQuestionsBySheet)
+            } catch (err) {
+                console.error('Failed to load Google Sheet:', err)
+            }
         }
-    }
+
+        loadFromGoogleSheets(GOOGLE_SHEET_XLSX_URL)
+    }, [])
 
     const questions = selectedSheet ? questionsBySheet[selectedSheet] || [] : []
 
@@ -136,20 +125,10 @@ export default function App() {
         <div className="container">
             <h1>Excel Quiz Dashboard</h1>
 
-            <div className="uploader">
-                <label className="filelabel">
-                    Upload Excel (.xlsx)
-                    <input type="file" accept=".xlsx,.xls" onChange={handleFile} />
-                </label>
-            </div>
-
             {availableSheets.length > 1 && (
                 <div className="sheet-selector">
                     <label>Sheet: </label>
-                    <select
-                        value={selectedSheet}
-                        onChange={e => setSelectedSheet(e.target.value)}
-                    >
+                    <select value={selectedSheet} onChange={e => setSelectedSheet(e.target.value)}>
                         {availableSheets.map(s => (
                             <option key={s.name} value={s.name}>{s.name}</option>
                         ))}
@@ -182,7 +161,7 @@ export default function App() {
             </div>
 
             <div className="questions">
-                {filtered.length === 0 && <p>No questions loaded. Upload an Excel file to begin.</p>}
+                {filtered.length === 0 && <p>No questions loaded.</p>}
                 {filtered.map((q, idx) => {
                     const chosen = results[`${selectedSheet}-${idx}`]
                     const correctness = checkIsCorrect(q, chosen)
@@ -215,7 +194,7 @@ export default function App() {
                 })}
             </div>
 
-            <footer>Built with React + SheetJS • Drop an Excel with columns: Question, Option A..E, Correct Answer, Explanation, Domain, Competency</footer>
+            <footer>Built with React + SheetJS • Auto-loads from Google Sheets</footer>
         </div>
     )
 }
